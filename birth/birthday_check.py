@@ -35,7 +35,6 @@ class BirthdayReminder:
 
     def check_birthdays(self):
         today = datetime.date.today()
-        print(self.csv_file, self.text_file)
         with open(self.csv_file, 'r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             next(reader)  # Пропустить заголовок
@@ -71,5 +70,3 @@ class BirthdayReminder:
         random_file = random.choice(files)
         random_file_path = os.path.join(folder, random_file)
         return random_file_path
-
-print(BirthdayReminder().get_random_text())
