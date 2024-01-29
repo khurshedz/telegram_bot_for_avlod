@@ -1,5 +1,8 @@
-/birth/db
-/birth/pics
+/birth/db/
+/birth/pics/
+/birth/__pycache__/
 /.idea/
 /secret.py
-/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
