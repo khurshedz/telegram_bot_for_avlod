@@ -1,14 +1,14 @@
 import csv
 import datetime
 import random
-import os
+from config import *
 
 
 class BirthdayReminder:
     def __init__(self):
-        self.csv_file = '/home/spac/PycharmProjects/telegram_bot/birth/db/birthdays.csv'
-        self.text_file = '/home/spac/PycharmProjects/telegram_bot/birth/db/random_text.txt'
-        self.pic_folder = '/home/spac/PycharmProjects/telegram_bot/birth/pics/'
+        self.csv_file = CSV_FILE_NAME
+        self.text_file = TEXT_FILE_NAME
+        self.pic_folder = PIC_FILDER_NAME
         self.text = ''
         self.name = ''
 
@@ -71,3 +71,5 @@ class BirthdayReminder:
         random_file = random.choice(files)
         random_file_path = os.path.join(folder, random_file)
         return random_file_path
+
+print(BirthdayReminder().get_random_text())
