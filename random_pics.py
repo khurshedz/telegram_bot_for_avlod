@@ -1,6 +1,6 @@
 from birth.birthday_check import BirthdayReminder
 from config import RANDOM_PIC_PATH
-from telegram import send_photo
+from main import send_photo
 
 
 def send_random_pic():
