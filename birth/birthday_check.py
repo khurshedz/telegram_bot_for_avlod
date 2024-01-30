@@ -15,7 +15,7 @@ class BirthdayReminder:
     def send_birthday_notification(self):
         self.update_congratulated_status()
 
-        return (f"Поздравляем {self.name} с днём рождения! Аз гурухи Авлод поздравление \n {self.text}"
+        return (f"Поздравляем {self.name} с днём рождения! Аз гурухи Авлод поздравление \n \n {self.text}"
                 , self.get_random_file())
 
     def update_congratulated_status(self):
@@ -64,9 +64,11 @@ class BirthdayReminder:
             formatted_text = self.split_text_into_lines(random_line)
             return formatted_text
 
-    def get_random_file(self):
-        folder = os.path.join(os.getcwd(), self.pic_folder)
-        files = os.listdir(self.pic_folder)
+    def get_random_file(self, random_pic_folder=None):
+        pic_folder = random_pic_folder or self.pic_folder
+
+        folder = os.path.join(os.getcwd(), pic_folder)
+        files = os.listdir(pic_folder)
         random_file = random.choice(files)
         random_file_path = os.path.join(folder, random_file)
         return random_file_path

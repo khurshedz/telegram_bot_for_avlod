@@ -4,8 +4,9 @@ from secret import API_KEY_AQICN, API_KEY_IQ_AIR, API_KEY_WEATHER
 
 CITY = {'Moscow': ['55.751244', '37.618423'],
         'Yekaterinburg': ['56.833332', '60.583332'],
-        'Dushanbe': ['38.506497974', '68.224832434'],
-        'Finland': ['62.24147', '25.72088']}
+        'Denov': ['38.506497974', '68.224832434'],
+        'Dushanbe': ['38.53575', '68.77905'],
+        'Finland': ['62.24147', '25.72088'],}
 
 
 def request_weather(url):
@@ -22,7 +23,10 @@ def get_air_quality():
     for city, latlon in CITY.items():
         air_text = get_air_quality_iq_air(*latlon)
         text.append(air_text)
-    return '\n'.join(text) if text else 'No air quality'
+    if text:
+        return '\n'.join(text)
+    else:
+        return 'No air quality'
 
 
 def get_air_quality_iq_air(lat, lon):
