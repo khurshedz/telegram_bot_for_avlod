@@ -5,57 +5,83 @@ import datetime
 import magnetic_storm
 from birth.birthday_check import BirthdayReminder
 from secret import CHAT_IDS
+import log_setup
 
+# set up logger
+log_setup.setup_logger()
+
+def create_block_element(title, content):
+    return f"\n<blockquote>{title}</blockquote><pre>{content}</pre>\n"
 
 def get_formatted_currency():
-    return f"\n<blockquote>Курс</blockquote><pre>{currency.get_needed_currency()}</pre>\n"
-
+    try:
+        cur = currency.get_needed_currency()
+        return create_block_element("Курс", cur)
+    except Exception as e:
+        logging.exception("Could not get currency")
 
 def get_formatted_air_quality():
-    return f"\n<blockquote>Воздух</blockquote><pre>{air_q.get_air_quality()}\n</pre>\n"
-
+    try:
+        air_quality = air_q.get_air_quality()
+        return create_block_element("Воздух", air_quality)
+    except Exception as e:
+        logging.exception("Could not get air quality")
 
 def get_formatted_magnetic_storm_level():
-    return f'\n<blockquote>магнитосфера</blockquote><pre>{magnetic_storm.get_magnetic_storm_level()}</pre>\n'
-
+    try:
+        level = magnetic_storm.get_magnetic_storm_level()
+        return create_block_element("магнитосфера", level)
+    except Exception as e:
+        logging.exception("Could not get magnetic storm level")
 
 def get_formatted_date():
-    return f"\n<u>дата:{datetime.datetime.now().strftime('%d-%m-%Y %H:%M')} мск\n</u>"
-
+    date = datetime.datetime.now().strftime('%d-%m-%Y %H:%M')
+    return f"\n<u>дата:{date} мск\n</u>"
 
 def get_birthday_date():
     reminder = BirthdayReminder()
-    data = reminder.check_birthdays()
-    if data:
-        text, pic = data
-        return f"\n<blockquote>{text}</blockquote>", pic
-    else:
-        return "", ""
-
+    try:
+        data = reminder.check_birthdays()
+        if data:
+            text, pic = data
+            return create_block_element(text, ""), pic
+        else:
+            return "", ""
+    except Exception as e:
+        logging.exception("Could not get birthday date")
 
 def main():
-    text_currency = get_formatted_currency()
-    text_air_quality = get_formatted_air_quality()
-    storm_level = get_formatted_magnetic_storm_level()
-    final_text = text_currency + text_air_quality + storm_level + get_formatted_date()
-    send_message(final_text)
-
+    try:
+        text_currency = get_formatted_currency()
+        text_air_quality = get_formatted_air_quality()
+        storm_level = get_formatted_magnetic_storm_level()
+        final_text = text_currency + text_air_quality + storm_level + get_formatted_date()
+        send_message(final_text)
+        birth_message()
+    except Exception as e:
+        logging.exception(f"An exception has occurred: {e}")
 
 def birth_message():
-    text, pic = get_birthday_date()
-    send_photo(photo=pic, text=text)
-
+    try:
+        text, pic = get_birthday_date()
+        send_photo(photo=pic, text=text)
+    except Exception as e:
+        logging.exception(f"An error occurred in birth_message: {e}")
 
 def send_message(text):
     for chat_id in CHAT_IDS:
-        telegram.send_message(chat_id=chat_id, text=text)
-
+        try:
+            telegram.send_message(chat_id=chat_id, text=text)
+        except Exception as e:
+            logging.exception(f"An error occurred in send_message: {e}")
 
 def send_photo(photo, text):
     for chat_id in CHAT_IDS:
-        telegram.send_photo(chat_id=chat_id, photo=photo, text=text)
-
+        try:
+            if photo and text:  # ensures photo and text are not None or an empty string
+                telegram.send_photo(chat_id=chat_id, photo=photo, text=text)
+        except Exception as e:
+            logging.exception(f"An error occurred in send_photo: {e}")
 
 if __name__ == '__main__':
     main()
-    birth_message()
