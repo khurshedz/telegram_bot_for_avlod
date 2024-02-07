@@ -38,7 +38,8 @@ def send_photo(photo, text):
         success = 200 <= response.status_code < 300
         is_all_successful &= success
         logging.info(f'Photo {photo} sent. Success: {success}')
-        logging.info(f'{response.text}')
+        resp = response.json()
+        logging.info(f'{resp.get("resp", "no resp")}: {resp.get("error_code","no err code")}')
 
     if isinstance(photo, str) and is_all_successful:
         try:
