@@ -8,7 +8,7 @@ from log_setup import *
 
 def send_message(chat_id, text='Не работает =(', parse_mode='HTML'):
     url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-    payload = {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
+    payload = {'message_thread_id': '138', 'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
 
     try:
         response = requests.post(url, data=payload)
@@ -32,7 +32,7 @@ def send_photo(photo, text):
 
     for chat_id in CHAT_IDS:
         files = {'photo': open(photo, 'rb') if isinstance(photo, str) else photo}
-        data = {'chat_id': chat_id, 'caption': text, 'parse_mode': 'HTML'}
+        data = {'message_thread_id': '138', 'chat_id': chat_id, 'caption': text, 'parse_mode': 'HTML'}
         response = requests.post(url, files=files, data=data)
 
         success = 200 <= response.status_code < 300

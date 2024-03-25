@@ -37,8 +37,8 @@ def get_formatted_magnetic_storm_level():
 
 
 def get_formatted_date():
-    date = datetime.datetime.now().strftime('%d-%m-%Y %H:%M')
-    return f"\n<u>дата:{date} мск\n</u>"
+    date = datetime.datetime.now().strftime('%d_%m_%Y %H:%M')
+    return f"\n#дата_{date} мск\n #отабот"
 
 
 def get_birthday_date():

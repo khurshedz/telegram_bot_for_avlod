@@ -19,7 +19,7 @@ def get_magnetic_storm_level():
                 k_index_str += '🟡'
             elif 5 <= k_index < 6:
                 k_index_str += '🔴'
-            elif 6 <= k_index < 7:
+            elif 6 <= k_index < 15:
                 k_index_str += '🟣'
 
             storm_level = (
