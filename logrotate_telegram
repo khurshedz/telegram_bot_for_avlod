@@ -1,0 +1,13 @@
+# Добавить в /etc/logrotate.d
+# sudo cp logrotate_telegram /etc/logrotate.d/
+
+/home/spac/PycharmProjects/telegram_bot/telebot.log
+{
+	su root root
+        daily
+        missingok
+        rotate 14
+        compress
+        notifempty
+        copytruncate
+}
