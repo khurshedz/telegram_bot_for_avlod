@@ -1,17 +1,17 @@
-import logging
 import os
+from custom_requests import post
 
 import requests
-from secret import TOKEN, CHAT_IDS
+from secret import TELEGRAM_TOKEN, CHAT_IDS
 from log_setup import *
 
 
 def send_message(chat_id, text='Не работает =(', parse_mode='HTML'):
-    url = f'https://api.telegram.org/bot{TOKEN}/sendMessage'
-    payload = {'message_thread_id': '138', 'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
+    url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
+    payload = {'chat_id': chat_id, 'text': text, 'parse_mode': parse_mode}
 
     try:
-        response = requests.post(url, data=payload)
+        response = post(url, data=payload)
         response.raise_for_status()
     except requests.exceptions.HTTPError as errh:
         logging.error(f"HTTP Error: {errh}")
@@ -26,14 +26,14 @@ def send_message(chat_id, text='Не работает =(', parse_mode='HTML'):
 
 
 def send_photo(photo, text):
-    url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto"
 
     is_all_successful = True
 
     for chat_id in CHAT_IDS:
         files = {'photo': open(photo, 'rb') if isinstance(photo, str) else photo}
-        data = {'message_thread_id': '138', 'chat_id': chat_id, 'caption': text, 'parse_mode': 'HTML'}
-        response = requests.post(url, files=files, data=data)
+        data = {'chat_id': chat_id, 'caption': text, 'parse_mode': 'HTML'}
+        response = post(url, files=files, data=data)
 
         success = 200 <= response.status_code < 300
         is_all_successful &= success

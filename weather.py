@@ -3,11 +3,11 @@ import requests
 import json
 from typing import Tuple, Optional
 from secret import AV_API_KEY, OWM_API_KEY
-
+from custom_requests import get
 
 def make_request(url: str) -> Optional[dict]:
     try:
-        response = requests.get(url)
+        response = get(url)
         response.raise_for_status()
         return json.loads(response.content)
     except requests.exceptions.RequestException:
@@ -47,7 +47,7 @@ class AirVisualApi(BaseAQIProvider):
     @staticmethod
     def _fetch_raw_data(lat, lon) -> dict:
         url = f"http://api.airvisual.com/v2/nearest_city?key={AV_API_KEY}&lat={lat}&lon={lon}"
-        response = requests.get(url)
+        response = get(url)
         return json.loads(response.content)
 
     @property
@@ -65,7 +65,7 @@ class OpenWeatherMapApi(BaseWeatherProvider):
     @staticmethod
     def _fetch_raw_data(lat, lon) -> dict:
         url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OWM_API_KEY}"
-        response = requests.get(url)
+        response = get(url)
         return json.loads(response.content)
 
     @property

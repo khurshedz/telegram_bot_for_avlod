@@ -1,11 +1,12 @@
 import requests
 from datetime import datetime, timedelta
+from custom_requests import get
 
 def get_magnetic_storm_level():
     url = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json"
 
     try:
-        response = requests.get(url)
+        response = get(url, timeout=(5, 10))
         data = response.json()
 
         if data:

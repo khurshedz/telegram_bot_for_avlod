@@ -1,10 +1,11 @@
 import requests
+from custom_requests import get
 
-from secret import KEY
+from secret import CURRENCY_KEY
 
 
 def get_current_currency():
-    response = requests.get(f"https://openexchangerates.org/api/latest.json?app_id={KEY}")
+    response = get(f"https://openexchangerates.org/api/latest.json?app_id={CURRENCY_KEY}")
     if response.status_code != 200:
         return None
 
@@ -17,7 +18,7 @@ def get_current_currency():
 
 def get_exchange_rate():
     try:
-        response = requests.get('https://www.cbr-xml-daily.ru/daily_json.js')
+        response = get('https://www.cbr-xml-daily.ru/daily_json.js')
         data = response.json()
         usd_tjs_rate = data['Valute']['USD']['Value']
         usd_rub_rate = 10 / data['Valute']['TJS']['Value']

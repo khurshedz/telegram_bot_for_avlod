@@ -1,7 +1,7 @@
 import logging
 from config import BASE_PATH
 
-logname = BASE_PATH + '/telebot.log'
+logname = '/home/spac/Logs/telegram/telebot.log'
 
 # Set up logging
 handler = logging.FileHandler(logname, 'a', 'utf-8')
