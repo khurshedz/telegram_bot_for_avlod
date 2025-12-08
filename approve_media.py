@@ -4,7 +4,7 @@ import asyncio
 import signal
 from datetime import datetime
 from pathlib import Path
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, Bot
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -20,7 +20,7 @@ from secret import *
 # Конфигурация
 CONFIG = {
     'BOT_TOKEN': TELEGRAM_TOKEN,
-    'TARGET_CHAT_ID': CHAT_IDS,  # ID группы куда отправлять
+    'TARGET_CHAT_ID': CHAT_ID,  # ID группы куда отправлять
     'MEDIA_FOLDER': '/home/spac/Pictures',  # Папка с медиафайлами
     'SUPPORTED_FORMATS': {'.jpg', '.jpeg', '.png', '.gif', '.mp4', '.mov', '.avi', '.mkv'},
     'WHITELIST': WHITELIST,  # Список ID пользователей, которым разрешен доступ,
@@ -607,6 +607,110 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 
+async def send_startup_notification():
+    """Отправляет первый файл сразу при запуске"""
+    if not CONFIG.get('NOTIFY_ON_START', False):
+        return
+
+    notify_users = CONFIG.get('NOTIFY_USERS', [])
+    if not notify_users:
+        return
+
+    try:
+        bot_instance = MediaBot()
+        bot = Bot(token=CONFIG['BOT_TOKEN'])
+
+        # Сканируем файлы
+        files = bot_instance.scan_media_files()
+
+        if not files:
+            print("⚠️ Нет файлов для отправки")
+            await bot.close()
+            return
+
+        current_time = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
+
+        # Отправляем первый файл каждому пользователю из списка
+        for user_id in notify_users:
+            # Проверяем белый список
+            if user_id not in CONFIG['WHITELIST']:
+                print(f"⚠️ Пользователь {user_id} не в белом списке")
+                continue
+
+            try:
+                # Проверяем сохраненное состояние
+                idx = bot_instance.current_file_index.get(user_id, 0)
+
+                if idx >= len(files):
+                    await bot.send_message(
+                        chat_id=user_id,
+                        text=f"✅ Все файлы просмотрены!\n\n📊 Всего отправлено: {sum(1 for f in files if f['sent'])}"
+                    )
+                    print(f"✅ Пользователю {user_id} - все файлы просмотрены")
+                    continue
+
+                file_info = files[idx]
+                file_path = file_info['path']
+
+                # Проверяем существование файла
+                if not file_path.exists():
+                    print(f"⚠️ Файл не найден: {file_path}")
+                    continue
+
+                created = file_info['created'].strftime('%d.%m.%Y %H:%M:%S')
+                size_mb = file_info['size'] / (1024 * 1024)
+                is_sent = file_info['sent']
+
+                status_emoji = "✅" if is_sent else "📝"
+                status_text = "УЖЕ ОТПРАВЛЕН" if is_sent else "Новый"
+
+                caption = (
+                    f"🤖 <b>Бот запущен</b> ({current_time})\n\n"
+                    f"{status_emoji} Статус: <b>{status_text}</b>\n"
+                    f"📁 Файл: <code>{file_path.name}</code>\n"
+                    f"📅 Дата создания: {created}\n"
+                    f"📊 Размер: {size_mb:.2f} MB\n"
+                    f"🔢 Файл {idx + 1} из {len(files)}\n"
+                    f"📤 Отправлено всего: {sum(1 for f in files if f['sent'])}"
+                )
+
+                if is_sent:
+                    caption += "\n\n⚠️ Этот файл уже был отправлен ранее"
+
+                # Определяем тип файла и отправляем
+                ext = file_path.suffix.lower()
+                keyboard = bot_instance.get_keyboard(is_sent)
+
+                with open(file_path, 'rb') as f:
+                    if ext in {'.jpg', '.jpeg', '.png', '.gif'}:
+                        await bot.send_photo(
+                            chat_id=user_id,
+                            photo=f,
+                            caption=caption,
+                            reply_markup=keyboard,
+                            parse_mode='HTML'
+                        )
+                    elif ext in {'.mp4', '.mov', '.avi', '.mkv'}:
+                        await bot.send_video(
+                            chat_id=user_id,
+                            video=f,
+                            caption=caption,
+                            reply_markup=keyboard,
+                            parse_mode='HTML'
+                        )
+
+                print(f"✅ Файл отправлен пользователю {user_id}: {file_path.name}")
+
+            except Exception as e:
+                print(f"⚠️ Ошибка отправки пользователю {user_id}: {e}")
+
+        # Закрываем bot
+        await bot.close()
+
+    except Exception as e:
+        print(f"⚠️ Ошибка отправки файлов: {e}")
+
+
 def main():
     """Главная функция запуска бота"""
     # Регистрируем обработчики сигналов
@@ -634,6 +738,14 @@ def main():
     print(f"💾 Файл состояния: {CONFIG['STATE_FILE']}")
     print(f"📋 Лог отправок: {CONFIG['SENT_FILES_LOG']}")
     print("=" * 50)
+
+    # Отправляем уведомление о запуске
+    if CONFIG.get('NOTIFY_ON_START', False):
+        print("📨 Отправка файлов при запуске...")
+        try:
+            asyncio.run(send_startup_notification())
+        except Exception as e:
+            print(f"⚠️ Ошибка при отправке файлов: {e}")
 
     try:
         # Запускаем бота
