@@ -40,7 +40,7 @@ class BirthdayReminder:
             for row in reader:
                 birthday = datetime.datetime.strptime(row[1], '%Y-%m-%d').date()
 
-                if (today.day, today.month) == (birthday.day, birthday.month) and row[2] == 'False':
+                if (today.day, today.month) == (birthday.day, birthday.month):
                     self.name = row[0]
                     self.text = self.get_random_text()
                     return self.send_birthday_notification()

@@ -1,5 +1,5 @@
 import currency
-import telegram
+import telegram_sender
 import air_q
 import datetime
 import magnetic_storm
@@ -91,4 +91,6 @@ def send_photo(photo, text):
 
 
 if __name__ == '__main__':
+    from random_pics import send_random_pic
+    send_random_pic()
     main()
