@@ -1,12 +1,14 @@
-import currency
-import telegram_sender
-import air_q
 import datetime
+
+import air_q
+import currency
 import magnetic_storm
+import telegram_sender
 from birth.birthday_check import BirthdayReminder
-from secret import CHAT_IDS
-from log_setup import *
 from config import ESKHATA_PIC_PATH, validate_startup_paths
+from errors import IntegrationError
+from log_setup import *
+from secret import CHAT_IDS
 
 
 def create_block_element(title, content):
@@ -14,30 +16,18 @@ def create_block_element(title, content):
 
 
 def get_formatted_currency():
-    try:
-        cur = currency.get_needed_currency()
-        return create_block_element("Курс", cur)
-    except Exception as e:
-        logging.exception("Could not get currency")
-        return ""
+    cur = currency.get_needed_currency()
+    return create_block_element("Курс", cur)
 
 
 def get_formatted_air_quality():
-    try:
-        air_quality = air_q.get_air_quality()
-        return create_block_element("Воздух", air_quality)
-    except Exception as e:
-        logging.exception("Could not get air quality")
-        return ""
+    air_quality = air_q.get_air_quality()
+    return create_block_element("Воздух", air_quality)
 
 
 def get_formatted_magnetic_storm_level():
-    try:
-        level = magnetic_storm.get_magnetic_storm_level()
-        return create_block_element("магнитосфера", level)
-    except Exception as e:
-        logging.exception("Could not get magnetic storm level")
-        return ""
+    level = magnetic_storm.get_magnetic_storm_level()
+    return create_block_element("магнитосфера", level)
 
 
 def get_formatted_date():
@@ -47,15 +37,12 @@ def get_formatted_date():
 
 def get_birthday_date():
     reminder = BirthdayReminder()
-    try:
-        data = reminder.check_birthdays()
-        if data:
-            text, pic = data
-            return create_block_element(text, ""), pic
-        else:
-            return "", ""
-    except Exception as e:
-        logging.exception("Could not get birthday date")
+    data = reminder.check_birthdays()
+    if data:
+        text, pic = data
+        return create_block_element(text, ""), pic
+
+    return "", ""
 
 
 def main():
@@ -75,24 +62,24 @@ def main():
         send_message(final_text)
         send_birth_message()
         send_eskhata_currency()
-    except Exception as e:
-        logging.exception(f"An exception has occurred: {e}")
+    except IntegrationError:
+        logging.exception("External integration failed")
+    except Exception:
+        logging.exception("Unexpected error in main orchestration")
 
 
 def send_birth_message():
-    try:
-        text, pic = get_birthday_date()
-        if not pic:
-            logging.info("Skipping birthday photo send: no photo")
-            return
+    text, pic = get_birthday_date()
+    if not pic:
+        logging.info("Skipping birthday photo send: no photo")
+        return
 
-        send_photo(photo=pic, text=text)
-    except Exception as e:
-        logging.exception(f"An error occurred in birth_message: {e}")
+    send_photo(photo=pic, text=text)
 
 
 def send_eskhata_currency():
     from currency_eskhata import EskhataScreenshot
+
     runner = EskhataScreenshot(
         visible=False,
         out_path=str(ESKHATA_PIC_PATH),
@@ -108,10 +95,7 @@ def send_message(text):
         raise ValueError("send_message expects text as str")
 
     for chat_id in CHAT_IDS:
-        try:
-            telegram_sender.send_message(chat_id=chat_id, text=text)
-        except Exception as e:
-            logging.exception(f"An error occurred in send_message: {e}")
+        telegram_sender.send_message(chat_id=chat_id, text=text)
 
 
 def send_photo(photo, text):
@@ -120,10 +104,7 @@ def send_photo(photo, text):
     if not isinstance(text, str):
         raise ValueError("send_photo expects text as str")
 
-    try:
-        telegram_sender.send_photo(photo=photo, text=text)
-    except Exception as e:
-        logging.exception(f"An error occurred in send_photo: {e}")
+    telegram_sender.send_photo(photo=photo, text=text)
 
 
 if __name__ == '__main__':
