@@ -1,5 +1,6 @@
 import currency
-import telegram_sender
+from telegram_broadcaster import TelegramBroadcaster
+from telegram_sender import default_telegram_client
 import air_q
 import datetime
 import magnetic_storm
@@ -7,6 +8,9 @@ from birth.birthday_check import BirthdayReminder
 from secret import CHAT_IDS
 from log_setup import *
 from config import ESKHATA_PIC_PATH, validate_startup_paths
+
+
+broadcaster = TelegramBroadcaster(chat_ids=CHAT_IDS, client=default_telegram_client)
 
 
 def create_block_element(title, content):
@@ -107,11 +111,9 @@ def send_message(text):
     if not isinstance(text, str):
         raise ValueError("send_message expects text as str")
 
-    for chat_id in CHAT_IDS:
-        try:
-            telegram_sender.send_message(chat_id=chat_id, text=text)
-        except Exception as e:
-            logging.exception(f"An error occurred in send_message: {e}")
+    results = broadcaster.send_to_all_chats(text=text)
+    if not all(result.ok for result in results):
+        logging.warning("Some messages were not delivered")
 
 
 def send_photo(photo, text):
@@ -120,10 +122,9 @@ def send_photo(photo, text):
     if not isinstance(text, str):
         raise ValueError("send_photo expects text as str")
 
-    try:
-        telegram_sender.send_photo(photo=photo, text=text)
-    except Exception as e:
-        logging.exception(f"An error occurred in send_photo: {e}")
+    results = broadcaster.send_photo_to_all_chats(photo=photo, text=text)
+    if not all(result.ok for result in results):
+        logging.warning("Some photos were not delivered")
 
 
 if __name__ == '__main__':
