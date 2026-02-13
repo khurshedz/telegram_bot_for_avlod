@@ -1,4 +1,4 @@
-import time
+from config import ESKHATA_PIC_PATH
 from pathlib import Path
 from selenium import webdriver
 from selenium.common.exceptions import ElementClickInterceptedException
@@ -95,7 +95,7 @@ class EskhataScreenshot:
 
 if __name__ == "__main__":
     runner = EskhataScreenshot(visible=True,
-                               out_path="screens/eskhata_transfers.png",
+                               out_path=ESKHATA_PIC_PATH,
                                window_size=(780, 720),
                                )
     print(runner.run())

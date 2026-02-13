@@ -77,15 +77,15 @@ def send_birth_message():
 
 def send_eskhata_currency():
     from currency_eskhata import EskhataScreenshot
-    photo_path = "screens/eskhata_transfers.png"
+    from config import ESKHATA_PIC_PATH
     runner = EskhataScreenshot(
         visible=False,
-        out_path=photo_path,
+        out_path=ESKHATA_PIC_PATH,
         window_size=(780, 720),
     )
     result = runner.run()
     print(result)
-    send_photo(photo_path, "Курс по эсхата")
+    send_photo(ESKHATA_PIC_PATH, "Курс по эсхата")
 
 
 def send_message(text):
