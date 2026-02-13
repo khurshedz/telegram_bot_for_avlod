@@ -61,12 +61,13 @@ def main():
         storm_level = get_formatted_magnetic_storm_level()
         final_text = text_currency + text_air_quality + storm_level + get_formatted_date()
         send_message(final_text)
-        birth_message()
+        send_birth_message()
+        send_eskhata_currency()
     except Exception as e:
         logging.exception(f"An exception has occurred: {e}")
 
 
-def birth_message():
+def send_birth_message():
     try:
         text, pic = get_birthday_date()
         send_photo(photo=pic, text=text)
@@ -74,10 +75,23 @@ def birth_message():
         logging.exception(f"An error occurred in birth_message: {e}")
 
 
+def send_eskhata_currency():
+    from currency_eskhata import EskhataScreenshot
+    photo_path = "screens/eskhata_transfers.png"
+    runner = EskhataScreenshot(
+        visible=False,
+        out_path=photo_path,
+        window_size=(780, 720),
+    )
+    result = runner.run()
+    print(result)
+    send_photo(photo_path, "Курс по эсхата")
+
+
 def send_message(text):
     for chat_id in CHAT_IDS:
         try:
-            telegram.send_message(chat_id=chat_id, text=text)
+            telegram_sender.send_message(chat_id=chat_id, text=text)
         except Exception as e:
             logging.exception(f"An error occurred in send_message: {e}")
 
@@ -85,12 +99,12 @@ def send_message(text):
 def send_photo(photo, text):
         try:
             if photo and text:  # ensures photo and text are not None or an empty string
-                telegram.send_photo(photo=photo, text=text)
+                telegram_sender.send_photo(photo=photo, text=text)
         except Exception as e:
             logging.exception(f"An error occurred in send_photo: {e}")
 
 
 if __name__ == '__main__':
-    from random_pics import send_random_pic
-    send_random_pic()
+    # from random_pics import send_random_pic
+    # send_random_pic()
     main()

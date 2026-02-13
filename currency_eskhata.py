@@ -1,4 +1,3 @@
-import sys
 import time
 from pathlib import Path
 from selenium import webdriver
@@ -7,91 +6,96 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+
 class EskhataScreenshot:
-    def __init__(self, visible=True, timeout=10, slowmo=0.1, out_path="eskhata_transfers.png", window_size=(1400, 2200),
-                 screenshot_size=None):
+    def __init__(
+        self,
+        visible=True,
+        timeout=15,
+        out_path="",
+        window_size=(890, 750),
+    ):
         self.url = "https://eskhata.com/"
         self.tab_text = "Денежные переводы"
         self.timeout = timeout
-        self.slowmo = slowmo
         self.out_path = Path(out_path)
         self.window_size = window_size
-        self.screenshot_size = screenshot_size
+
         opts = webdriver.ChromeOptions()
         if not visible:
             opts.add_argument("--headless=new")
         opts.add_argument(f"--window-size={window_size[0]},{window_size[1]}")
+        opts.add_argument("--disable-blink-features=AutomationControlled")
+
         self.driver = webdriver.Chrome(options=opts)
 
-    def log(self, msg):
-        print(msg, flush=True)
+    def _wait_page_loaded(self):
+        WebDriverWait(self.driver, self.timeout).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
 
-    def _find_transfers_tab(self):
-        try:
-            return WebDriverWait(self.driver, self.timeout).until(
-                EC.element_to_be_clickable((By.XPATH, f"//*[contains(text(), '{self.tab_text}')]"))
+    def _find_tab(self):
+        return WebDriverWait(self.driver, self.timeout).until(
+            EC.presence_of_element_located(
+                (By.XPATH, f"//*[contains(text(), '{self.tab_text}')]")
             )
-        except Exception:
-            return None
+        )
+
+    def _scroll_to_element(self, element):
+        self.driver.execute_script(
+            """
+            const element = arguments[0];
+            const headerOffset = 120;
+            const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+            const offsetPosition = elementPosition - headerOffset;
+            window.scrollTo({top: offsetPosition, behavior: 'instant'});
+            """,
+            element,
+        )
+        WebDriverWait(self.driver, self.timeout).until(
+            EC.visibility_of(element)
+        )
+
+    def _click(self, element):
+        try:
+            WebDriverWait(self.driver, self.timeout).until(
+                EC.element_to_be_clickable(element)
+            )
+            element.click()
+        except ElementClickInterceptedException:
+            self.driver.execute_script("arguments[0].click();", element)
 
     def _close_popups(self):
         try:
-            close_btn = self.driver.find_element(By.CSS_SELECTOR, ".popup-close, .modal-close")
-            close_btn.click()
-            time.sleep(self.slowmo)
-            self.log("→ Закрыл всплывающее окно")
+            btn = self.driver.find_element(By.CSS_SELECTOR, ".popup-close, .modal-close")
+            btn.click()
         except Exception:
-            pass  # Если нет попапа — просто продолжаем
-
-    def get_screenshot(self):
-        if self.screenshot_size:
-            self.driver.set_window_size(*self.screenshot_size)
-            time.sleep(self.slowmo)
-
-        self.driver.save_screenshot(str(self.out_path))
-
-    def _is_obstructed(self, element):
-        rect = element.rect
-        x, y = rect['x'] + rect['width'] // 2, rect['y'] + rect['height'] // 2
-        obstructing = self.driver.execute_script("""
-            return document.elementFromPoint(arguments[0], arguments[1]);
-        """, x, y)
-        return obstructing != element
+            pass
 
     def run(self):
         try:
-            self.log("→ Открываю сайт")
             self.driver.get(self.url)
-            time.sleep(2)  # Ждём 2 секунды, не дожидаясь полной загрузки
-
-            self.log(f"→ Ищу вкладку: {self.tab_text}")
-            tab = self._find_transfers_tab()
-            if not tab:
-                raise RuntimeError("Не нашёл вкладку по тексту")
-
-            self.log("→ Прокручиваю к вкладке")
-            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", tab)
-            time.sleep(self.slowmo)
-
+            self._wait_page_loaded()
             self._close_popups()
 
-            self.log("→ Кликаю вкладку")
-            try:
-                tab.click()
-            except ElementClickInterceptedException:
-                self.log("⚠ Элемент перекрыт — пробую клик через JS")
-                self.driver.execute_script("arguments[0].click();", tab)
+            tab = self._find_tab()
+            self._scroll_to_element(tab)
+            self._click(tab)
 
-            self.log(f"→ Делаю скриншот: {self.out_path}")
-            self.get_screenshot()
+            WebDriverWait(self.driver, self.timeout).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
 
-            self.log(f"✔ Готово: {self.out_path.resolve()}")
+            self.out_path.parent.mkdir(parents=True, exist_ok=True)
+            self.driver.save_screenshot(str(self.out_path))
             return str(self.out_path.resolve())
         finally:
-            self.log("→ Закрываю браузер")
             self.driver.quit()
 
+
 if __name__ == "__main__":
-    runner = EskhataScreenshot(visible=True, timeout=10, slowmo=0.1, out_path="eskhata_transfers.png",
-                               window_size=(890, 770))
-    runner.run()
+    runner = EskhataScreenshot(visible=True,
+                               out_path="screens/eskhata_transfers.png",
+                               window_size=(780, 720),
+                               )
+    print(runner.run())
