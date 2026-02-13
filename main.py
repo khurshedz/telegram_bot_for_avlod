@@ -6,6 +6,7 @@ import magnetic_storm
 from birth.birthday_check import BirthdayReminder
 from secret import CHAT_IDS
 from log_setup import *
+from config import ESKHATA_PIC_PATH, validate_startup_paths
 
 
 def create_block_element(title, content):
@@ -55,6 +56,10 @@ def get_birthday_date():
 
 
 def main():
+    if not validate_startup_paths():
+        logging.error("Приложение остановлено: обязательные пути недоступны.")
+        return
+
     try:
         text_currency = get_formatted_currency()
         text_air_quality = get_formatted_air_quality()
@@ -77,15 +82,14 @@ def send_birth_message():
 
 def send_eskhata_currency():
     from currency_eskhata import EskhataScreenshot
-    from config import ESKHATA_PIC_PATH
     runner = EskhataScreenshot(
         visible=False,
-        out_path=ESKHATA_PIC_PATH,
+        out_path=str(ESKHATA_PIC_PATH),
         window_size=(780, 720),
     )
     result = runner.run()
     print(result)
-    send_photo(ESKHATA_PIC_PATH, "Курс по эсхата")
+    send_photo(str(ESKHATA_PIC_PATH), "Курс по эсхата")
 
 
 def send_message(text):

@@ -1,10 +1,10 @@
 import logging
-from config import BASE_PATH
 
-logname = '/home/spac/Logs/telegram/telebot.log'
+from config import LOG_FILE_PATH
 
-# Set up logging
-handler = logging.FileHandler(logname, 'a', 'utf-8')
+LOG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+handler = logging.FileHandler(LOG_FILE_PATH, 'a', 'utf-8')
 formatter = logging.Formatter('%(asctime)s - %(message)s')
 handler.setFormatter(formatter)
 logging.basicConfig(handlers=[handler], level=logging.DEBUG)

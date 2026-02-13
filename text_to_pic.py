@@ -1,27 +1,23 @@
+from pathlib import Path
+
 from PIL import Image, ImageDraw, ImageFont
 
+from config import TEXT_TO_PIC_FONT_PATH
 
-def generate_image(text):
-    # Создание изображения
+
+def generate_image(text, output_path: str | Path = "text_image.png"):
     image = Image.new('RGBA', (150, 300), color=(255, 255, 255))
-
-    # Создание объекта для рисования
     draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(str(TEXT_TO_PIC_FONT_PATH), 8)
 
-    # Загрузка шрифта
-    font = ImageFont.truetype("/home/spac/git/finance-world/auxiliary_files/_repositories/src/git-new.dengabank.ru/backend/finance/fonts/arial.ttf", 8)
-
-    # Разбиение текста на строки
     lines = text.split('\n')
 
-    # Отрисовка каждой строки текста
     for i, line in enumerate(lines):
         draw.text((10, 10 + i * 20), line, font=font, fill=(0, 0, 0))
 
-    image.save("text_image.png")
+    image.save(Path(output_path))
 
 
-# Ваш текст
 text = """
 Четверг 01.02.2024|14 дней
 🔗 Лиды     1144|  -12%
@@ -36,7 +32,5 @@ text = """
 📥 Выдан    555 |   +7%
 """
 
-# Генерация изображения
+
 generate_image(text)
-
-
