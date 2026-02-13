@@ -1,132 +1,42 @@
-import currency
-import telegram_sender
-import air_q
-import datetime
-import magnetic_storm
-from birth.birthday_check import BirthdayReminder
-from secret import CHAT_IDS
-from log_setup import *
-from config import ESKHATA_PIC_PATH, validate_startup_paths
+import logging
+
+from config import validate_startup_paths
+from log_setup import setup_logging
+from services.eskhata_report import EskhataReportService
+from services.report_builder import DailyReportBuilder
+from services.telegram_notifier import TelegramNotifier
 
 
-def create_block_element(title, content):
-    return f"\n<blockquote>{title}</blockquote><pre>{content}</pre>\n"
-
-
-def get_formatted_currency():
-    try:
-        cur = currency.get_needed_currency()
-        return create_block_element("Курс", cur)
-    except Exception as e:
-        logging.exception("Could not get currency")
-        return ""
-
-
-def get_formatted_air_quality():
-    try:
-        air_quality = air_q.get_air_quality()
-        return create_block_element("Воздух", air_quality)
-    except Exception as e:
-        logging.exception("Could not get air quality")
-        return ""
-
-
-def get_formatted_magnetic_storm_level():
-    try:
-        level = magnetic_storm.get_magnetic_storm_level()
-        return create_block_element("магнитосфера", level)
-    except Exception as e:
-        logging.exception("Could not get magnetic storm level")
-        return ""
-
-
-def get_formatted_date():
-    date = datetime.datetime.now().strftime('%d_%m_%Y %H:%M')
-    return f"\n#дата_{date} мск\n #отабот"
-
-
-def get_birthday_date():
-    reminder = BirthdayReminder()
-    try:
-        data = reminder.check_birthdays()
-        if data:
-            text, pic = data
-            return create_block_element(text, ""), pic
-        else:
-            return "", ""
-    except Exception as e:
-        logging.exception("Could not get birthday date")
+logger = setup_logging()
 
 
 def main():
     if not validate_startup_paths():
-        logging.error("Приложение остановлено: обязательные пути недоступны.")
+        logger.error("Приложение остановлено: обязательные пути недоступны.")
         return
 
-    try:
-        text_currency = get_formatted_currency()
-        text_air_quality = get_formatted_air_quality()
-        storm_level = get_formatted_magnetic_storm_level()
-        final_text = text_currency + text_air_quality + storm_level + get_formatted_date()
-        if not final_text.strip():
-            logging.info("Skipping Telegram send: final text is empty or whitespace")
-            return
-
-        send_message(final_text)
-        send_birth_message()
-        send_eskhata_currency()
-    except Exception as e:
-        logging.exception(f"An exception has occurred: {e}")
-
-
-def send_birth_message():
-    try:
-        text, pic = get_birthday_date()
-        if not pic:
-            logging.info("Skipping birthday photo send: no photo")
-            return
-
-        send_photo(photo=pic, text=text)
-    except Exception as e:
-        logging.exception(f"An error occurred in birth_message: {e}")
-
-
-def send_eskhata_currency():
-    from currency_eskhata import EskhataScreenshot
-    runner = EskhataScreenshot(
-        visible=False,
-        out_path=str(ESKHATA_PIC_PATH),
-        window_size=(780, 720),
-    )
-    result = runner.run()
-    print(result)
-    send_photo(str(ESKHATA_PIC_PATH), "Курс по эсхата")
-
-
-def send_message(text):
-    if not isinstance(text, str):
-        raise ValueError("send_message expects text as str")
-
-    for chat_id in CHAT_IDS:
-        try:
-            telegram_sender.send_message(chat_id=chat_id, text=text)
-        except Exception as e:
-            logging.exception(f"An error occurred in send_message: {e}")
-
-
-def send_photo(photo, text):
-    if not photo:
-        raise ValueError("send_photo expects a non-empty photo")
-    if not isinstance(text, str):
-        raise ValueError("send_photo expects text as str")
+    report_builder = DailyReportBuilder(logger=logger)
+    notifier = TelegramNotifier(logger=logger)
+    eskhata_report_service = EskhataReportService(logger=logger)
 
     try:
-        telegram_sender.send_photo(photo=photo, text=text)
-    except Exception as e:
-        logging.exception(f"An error occurred in send_photo: {e}")
+        final_text = report_builder.build_daily_report()
+        if final_text.strip():
+            notifier.send_text(final_text)
+        else:
+            logger.info("Skipping Telegram send: final text is empty or whitespace")
+
+        birthday_text, birthday_pic = report_builder.get_birthday_payload()
+        if birthday_pic:
+            notifier.send_photo(photo=birthday_pic, text=birthday_text)
+        else:
+            logger.info("Skipping birthday photo send: no photo")
+
+        eskhata_photo, eskhata_text = eskhata_report_service.build()
+        notifier.send_photo(photo=eskhata_photo, text=eskhata_text)
+    except Exception:
+        logger.exception("An exception has occurred in main")
 
 
 if __name__ == '__main__':
-    # from random_pics import send_random_pic
-    # send_random_pic()
     main()
