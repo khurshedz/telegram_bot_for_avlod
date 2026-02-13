@@ -10,31 +10,36 @@ def get_current_currency():
         return None
 
     data = response.json()
-    usd_tjs_rate = data["rates"]["TJS"]
-    usd_rub_rate = data["rates"]["RUB"]
-    rub_tjs_rate = usd_tjs_rate / usd_rub_rate * 1000
-    return usd_tjs_rate, usd_rub_rate, rub_tjs_rate
+    usd_rate = data["rates"]["TJS"]
+    rub_rate = data["rates"]["RUB"]
+    tjs_rate = usd_rate / rub_rate * 1000
+    return usd_rate, rub_rate, tjs_rate
 
 
 def get_exchange_rate():
     try:
         response = get('https://www.cbr-xml-daily.ru/daily_json.js')
         data = response.json()
-        usd_tjs_rate = data['Valute']['USD']['Value']
-        usd_rub_rate = 10 / data['Valute']['TJS']['Value']
-        rub_tjs_rate = usd_rub_rate * usd_tjs_rate
-        return rub_tjs_rate, usd_tjs_rate, usd_rub_rate * 1000
-    except requests.exceptions.RequestException as e:
+        usd_rate = data['Valute']['USD']['Value']
+        rub_rate = 10 / data['Valute']['TJS']['Value']
+        tjs_rate = rub_rate * usd_rate
+        return usd_rate, rub_rate * 1000, tjs_rate
+    except requests.exceptions.RequestException:
         return None
 
 
 def get_needed_currency():
-    data = get_current_currency() if get_current_currency() else get_exchange_rate()
-    usd, tjs, rub = data
+    current = get_current_currency()
+    if current is None:
+        current = get_exchange_rate()
+
+    if current is None:
+        return "Не удалось получить курсы валют ни из основного, ни из резервного источника."
+
+    usd, rub, tjs = current
     return (
         f"1💲       : {usd:.2f} 🇹🇯\n"
-        f"1💲       : {tjs:.2f} 🇷🇺\n"
-        f"1000 🇷🇺   : {rub:.2f} 🇹🇯\n"
+        f"1💲       : {rub:.2f} 🇷🇺\n"
+        f"1000 🇷🇺   : {tjs:.2f} 🇹🇯\n"
     )
-
 
