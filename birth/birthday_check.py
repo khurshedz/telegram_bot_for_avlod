@@ -1,15 +1,16 @@
 import csv
 import datetime
-import os
 import random
-from config import CSV_FILE_NAME, TEXT_FILE_NAME, PIC_FILDER_NAME
+from pathlib import Path
+
+from config import CSV_FILE_NAME, TEXT_FILE_NAME, PIC_FOLDER_NAME
 
 
 class BirthdayReminder:
     def __init__(self):
-        self.csv_file = CSV_FILE_NAME
-        self.text_file = TEXT_FILE_NAME
-        self.pic_folder = PIC_FILDER_NAME
+        self.csv_file = Path(CSV_FILE_NAME)
+        self.text_file = Path(TEXT_FILE_NAME)
+        self.pic_folder = Path(PIC_FOLDER_NAME)
         self.text = ''
         self.name = ''
 
@@ -20,20 +21,20 @@ class BirthdayReminder:
                 self.get_random_file())
 
     def update_congratulated_status(self):
-        with open(self.csv_file, 'r', newline='') as csvfile:
+        with self.csv_file.open('r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             rows = [row for row in reader if row[0] != self.name]
 
         rows.append([self.name, datetime.datetime.now().strftime('%Y-%m-%d'), 'True'])
 
-        with open(self.csv_file, 'w', newline='') as csvfile:
+        with self.csv_file.open('w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerows(rows)
 
     def check_birthdays(self):
         today = datetime.date.today()
 
-        with open(self.csv_file, 'r', newline='') as csvfile:
+        with self.csv_file.open('r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             next(reader)
 
@@ -53,18 +54,15 @@ class BirthdayReminder:
         return '\n'.join(lines)
 
     def get_random_text(self):
-        with open(self.text_file, 'r') as file:
+        with self.text_file.open('r') as file:
             lines = file.readlines()
 
         random_line = random.choice(lines)
         return self.split_text_into_lines(random_line)
 
     def get_random_file(self, random_pic_folder=None):
-        pic_folder = random_pic_folder or self.pic_folder
-        folder = os.path.join(os.getcwd(), pic_folder)
-
-        files = os.listdir(pic_folder)
+        pic_folder = Path(random_pic_folder) if random_pic_folder else self.pic_folder
+        files = [f for f in pic_folder.iterdir() if f.is_file()]
         random_file = random.choice(files)
 
-        return os.path.join(folder, random_file)
-
+        return str(random_file)
