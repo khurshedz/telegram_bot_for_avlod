@@ -19,6 +19,7 @@ def get_formatted_currency():
         return create_block_element("Курс", cur)
     except Exception as e:
         logging.exception("Could not get currency")
+        return ""
 
 
 def get_formatted_air_quality():
@@ -27,6 +28,7 @@ def get_formatted_air_quality():
         return create_block_element("Воздух", air_quality)
     except Exception as e:
         logging.exception("Could not get air quality")
+        return ""
 
 
 def get_formatted_magnetic_storm_level():
@@ -35,6 +37,7 @@ def get_formatted_magnetic_storm_level():
         return create_block_element("магнитосфера", level)
     except Exception as e:
         logging.exception("Could not get magnetic storm level")
+        return ""
 
 
 def get_formatted_date():
@@ -65,6 +68,10 @@ def main():
         text_air_quality = get_formatted_air_quality()
         storm_level = get_formatted_magnetic_storm_level()
         final_text = text_currency + text_air_quality + storm_level + get_formatted_date()
+        if not final_text.strip():
+            logging.info("Skipping Telegram send: final text is empty or whitespace")
+            return
+
         send_message(final_text)
         send_birth_message()
         send_eskhata_currency()
@@ -75,6 +82,10 @@ def main():
 def send_birth_message():
     try:
         text, pic = get_birthday_date()
+        if not pic:
+            logging.info("Skipping birthday photo send: no photo")
+            return
+
         send_photo(photo=pic, text=text)
     except Exception as e:
         logging.exception(f"An error occurred in birth_message: {e}")
@@ -93,6 +104,9 @@ def send_eskhata_currency():
 
 
 def send_message(text):
+    if not isinstance(text, str):
+        raise ValueError("send_message expects text as str")
+
     for chat_id in CHAT_IDS:
         try:
             telegram_sender.send_message(chat_id=chat_id, text=text)
@@ -101,11 +115,15 @@ def send_message(text):
 
 
 def send_photo(photo, text):
-        try:
-            if photo and text:  # ensures photo and text are not None or an empty string
-                telegram_sender.send_photo(photo=photo, text=text)
-        except Exception as e:
-            logging.exception(f"An error occurred in send_photo: {e}")
+    if not photo:
+        raise ValueError("send_photo expects a non-empty photo")
+    if not isinstance(text, str):
+        raise ValueError("send_photo expects text as str")
+
+    try:
+        telegram_sender.send_photo(photo=photo, text=text)
+    except Exception as e:
+        logging.exception(f"An error occurred in send_photo: {e}")
 
 
 if __name__ == '__main__':
