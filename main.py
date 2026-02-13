@@ -6,7 +6,7 @@ import magnetic_storm
 from birth.birthday_check import BirthdayReminder
 from secret import CHAT_IDS
 from log_setup import *
-from config import ESKHATA_PIC_PATH, validate_startup_paths
+from config import ESKHATA_PIC_PATH, load_config, validate_startup_paths
 
 
 def create_block_element(title, content):
@@ -59,7 +59,8 @@ def get_birthday_date():
 
 
 def main():
-    if not validate_startup_paths():
+    config = load_config()
+    if not validate_startup_paths(config):
         logging.error("Приложение остановлено: обязательные пути недоступны.")
         return
 

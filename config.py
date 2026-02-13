@@ -1,30 +1,64 @@
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 BASE_PATH = Path(__file__).resolve().parent
 
-BIRTH_DIR = Path(os.getenv("BIRTH_DIR", BASE_PATH / "birth"))
-BIRTH_DB_DIR = Path(os.getenv("BIRTH_DB_DIR", BIRTH_DIR / "db"))
-CSV_FILE_NAME = Path(os.getenv("CSV_FILE_NAME", BIRTH_DB_DIR / "birthdays.csv"))
-TEXT_FILE_NAME = Path(os.getenv("TEXT_FILE_NAME", BIRTH_DB_DIR / "random_text.txt"))
-PIC_FOLDER_NAME = Path(os.getenv("PIC_FOLDER_NAME", BIRTH_DIR / "pics"))
 
-RANDOM_PIC_PATH = Path(os.getenv("RANDOM_PIC_PATH", BASE_PATH / "random_pics"))
-ESKHATA_PIC_PATH = Path(os.getenv("ESKHATA_PIC_PATH", BASE_PATH / "screens/eskhata_currency.png"))
+@dataclass(frozen=True)
+class Config:
+    birth_dir: Path
+    birth_db_dir: Path
+    csv_file_name: Path
+    text_file_name: Path
+    pic_folder_name: Path
+    random_pic_path: Path
+    eskhata_pic_path: Path
+    log_file_path: Path
 
-LOG_FILE_PATH = Path(os.getenv("LOG_FILE_PATH", BASE_PATH / "logs" / "telebot.log"))
+
+def load_config() -> Config:
+    birth_dir = Path(os.getenv("BIRTH_DIR", BASE_PATH / "birth"))
+    birth_db_dir = Path(os.getenv("BIRTH_DB_DIR", birth_dir / "db"))
+
+    return Config(
+        birth_dir=birth_dir,
+        birth_db_dir=birth_db_dir,
+        csv_file_name=Path(os.getenv("CSV_FILE_NAME", birth_db_dir / "birthdays.csv")),
+        text_file_name=Path(os.getenv("TEXT_FILE_NAME", birth_db_dir / "random_text.txt")),
+        pic_folder_name=Path(os.getenv("PIC_FOLDER_NAME", birth_dir / "pics")),
+        random_pic_path=Path(os.getenv("RANDOM_PIC_PATH", BASE_PATH / "random_pics")),
+        eskhata_pic_path=Path(os.getenv("ESKHATA_PIC_PATH", BASE_PATH / "screens/eskhata_currency.png")),
+        log_file_path=Path(os.getenv("LOG_FILE_PATH", BASE_PATH / "logs" / "telebot.log")),
+    )
 
 
-def validate_startup_paths() -> bool:
+_CONFIG = load_config()
+
+BIRTH_DIR = _CONFIG.birth_dir
+BIRTH_DB_DIR = _CONFIG.birth_db_dir
+CSV_FILE_NAME = _CONFIG.csv_file_name
+TEXT_FILE_NAME = _CONFIG.text_file_name
+PIC_FOLDER_NAME = _CONFIG.pic_folder_name
+
+RANDOM_PIC_PATH = _CONFIG.random_pic_path
+ESKHATA_PIC_PATH = _CONFIG.eskhata_pic_path
+
+LOG_FILE_PATH = _CONFIG.log_file_path
+
+
+def validate_startup_paths(config: Config | None = None) -> bool:
+    config = config or _CONFIG
+
     required_dirs = {
-        "Каталог с данными дней рождения": BIRTH_DB_DIR,
-        "Каталог с картинками для поздравлений": PIC_FOLDER_NAME,
-        "Каталог со случайными картинками": RANDOM_PIC_PATH,
+        "Каталог с данными дней рождения": config.birth_db_dir,
+        "Каталог с картинками для поздравлений": config.pic_folder_name,
+        "Каталог со случайными картинками": config.random_pic_path,
     }
     required_files = {
-        "CSV с днями рождения": CSV_FILE_NAME,
-        "Файл с поздравительными текстами": TEXT_FILE_NAME,
+        "CSV с днями рождения": config.csv_file_name,
+        "Файл с поздравительными текстами": config.text_file_name,
     }
 
     is_valid = True
@@ -51,5 +85,3 @@ def validate_startup_paths() -> bool:
         logging.info("Проверка путей при старте успешно пройдена.")
 
     return is_valid
-
-validate_startup_paths()
