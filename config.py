@@ -7,16 +7,13 @@ BASE_PATH = Path(__file__).resolve().parent
 BIRTH_DIR = Path(os.getenv("BIRTH_DIR", BASE_PATH / "birth"))
 BIRTH_DB_DIR = Path(os.getenv("BIRTH_DB_DIR", BIRTH_DIR / "db"))
 CSV_FILE_NAME = Path(os.getenv("CSV_FILE_NAME", BIRTH_DB_DIR / "birthdays.csv"))
-TEXT_FILE_NAME = Path(os.getenv("TEXT_FILE_NAME", BIRTH_DB_DIR / "texts.txt"))
+TEXT_FILE_NAME = Path(os.getenv("TEXT_FILE_NAME", BIRTH_DB_DIR / "random_text.txt"))
 PIC_FOLDER_NAME = Path(os.getenv("PIC_FOLDER_NAME", BIRTH_DIR / "pics"))
 
 RANDOM_PIC_PATH = Path(os.getenv("RANDOM_PIC_PATH", BASE_PATH / "random_pics"))
-ESKHATA_PIC_PATH = Path(os.getenv("ESKHATA_PIC_PATH", BASE_PATH / "eskhata_currency.png"))
+ESKHATA_PIC_PATH = Path(os.getenv("ESKHATA_PIC_PATH", BASE_PATH / "screens/eskhata_currency.png"))
 
 LOG_FILE_PATH = Path(os.getenv("LOG_FILE_PATH", BASE_PATH / "logs" / "telebot.log"))
-TEXT_TO_PIC_FONT_PATH = Path(
-    os.getenv("TEXT_TO_PIC_FONT_PATH", BASE_PATH / "fonts" / "arial.ttf")
-)
 
 
 def validate_startup_paths() -> bool:
@@ -28,7 +25,6 @@ def validate_startup_paths() -> bool:
     required_files = {
         "CSV с днями рождения": CSV_FILE_NAME,
         "Файл с поздравительными текстами": TEXT_FILE_NAME,
-        "Шрифт для генерации изображений": TEXT_TO_PIC_FONT_PATH,
     }
 
     is_valid = True
@@ -55,3 +51,5 @@ def validate_startup_paths() -> bool:
         logging.info("Проверка путей при старте успешно пройдена.")
 
     return is_valid
+
+validate_startup_paths()
